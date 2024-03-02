@@ -6,7 +6,7 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 procedure cal is
 
    year: Integer;
-   firstDay: String(1..10);
+   firstDay: Integer;
    lang: String(1..7);
    response: Boolean;
    daysInMonth: Integer;
@@ -20,7 +20,12 @@ procedure cal is
       4 => "Thursday  ",   -- Adjusted to 10 characters
       5 => "Friday    ",   -- Adjusted to 10 characters
       6 => "Saturday  "   -- Adjusted to 10 characters
-   ); 
+   );
+
+   --2D arrays representing the months
+   type Matrix is array (Integer range 0..5, Integer range 0..6) of Integer;
+   type ArrayOfMatrices is array (0..11) of Matrix;
+   months : ArrayOfMatrices;
 
    function isYearValid(year: Integer) return Boolean is
    begin
@@ -30,7 +35,7 @@ procedure cal is
 
    procedure readCalInfo(
       year     : out Integer;
-      firstDay : out String;
+      firstDay : out Integer;
       lang     : out String
    ) is
       inputYear : Integer;
@@ -56,7 +61,7 @@ procedure cal is
       -- Calculate the day that will be the first of the month
       calcYear := inputYear - 1;
       dayForFirstIndex := (36 + calcYear + (calcYear / 4) - (calcYear / 100) + (calcYear / 400)) mod 7; 
-      firstDay := days(dayForFirstIndex);
+      firstDay := dayForFirstIndex;
       
       year := inputYear;  -- Assigning the valid year with :=
       lang := "English";  -- Placeholder value with :=
@@ -100,11 +105,145 @@ procedure cal is
       end case;
    end numDaysInMonth;
 
+   procedure buildMonths(year: in Integer; firstDay: in Integer) is
+      monthFirstDay: Integer;
+      dayNum: Integer := 1;
+   begin
+
+      --decreasae by one in order to set it up for loop
+      monthFirstDay := firstDay;
+
+      --loop through all the months
+      for i in months'Range loop
+
+         for Row in months(i)'Range(1) loop
+
+            for Col in months(i)'Range(2) loop
+
+               if (Col < monthFirstDay and Row = 0) or dayNum > numDaysInMonth(i, year) then
+                  months(i)(Row, Col) := 0;
+               else
+                  months(i)(Row, Col) := dayNum;
+                  dayNum := dayNum + 1;
+               end if;
+
+            end loop;
+
+         end loop;
+
+         monthFirstDay := (monthFirstDay + numDaysInMonth(i, year)) mod 7;
+         dayNum := 1;
+
+      end loop; 
+   end buildMonths;
+
+   procedure printRowMonth(months: ArrayOfMatrices; startMonth: in Integer; endMonth: in Integer) is
+   begin
+      -- Loop through all the months
+      for i in startMonth..endMonth loop
+         for j in 0..6 loop
+            if months(i)(0, j) < 10 and months(i)(0, j) > 0 then
+               put(" ");
+               put(Integer'Image(months(i)(0, j)));
+            elsif months(i)(0, j) = 0 then
+               put("   ");
+            else
+               put(Integer'Image(months(i)(0, j)));
+            end if;
+         end loop;
+         put("  ");
+      end loop;
+
+      put_Line("");
+
+      for i in startMonth..endMonth loop
+         for j in 0..6 loop
+            if months(i)(1, j) < 10  and months(i)(1, j) > 0 then
+               put(" ");
+               put(Integer'Image(months(i)(1, j)));
+            elsif months(i)(1, j) = 0 then
+               put("   ");
+            else
+               put(Integer'Image(months(i)(1, j)));
+            end if;
+         end loop;
+         put("  ");
+      end loop;
+
+      put_Line("");
+
+      for i in startMonth..endMonth loop
+         for j in 0..6 loop
+            if months(i)(2, j) < 10  and months(i)(2, j) > 0 then
+               put(" ");
+               put(Integer'Image(months(i)(2, j)));
+            elsif months(i)(2, j) = 0 then
+               put("   ");
+            else
+               put(Integer'Image(months(i)(2, j)));
+            end if;
+         end loop;
+         put("  ");
+      end loop;
+
+      put_Line("");
+
+      for i in startMonth..endMonth loop
+         for j in 0..6 loop
+            if months(i)(3, j) < 10 and months(i)(3, j) > 0 then
+               put(" ");
+               put(Integer'Image(months(i)(3, j)));
+            elsif months(i)(3, j) = 0 then
+               put("   ");
+            else
+               put(Integer'Image(months(i)(3, j)));
+            end if;
+         end loop;
+         put("  ");
+      end loop;
+
+      put_Line("");
+
+      for i in startMonth..endMonth loop
+         for j in 0..6 loop
+            if months(i)(4, j) < 10 and months(i)(4, j) > 0 then
+               put(" ");
+               put(Integer'Image(months(i)(4, j)));
+            elsif months(i)(4, j) = 0 then
+               put("   ");
+            else
+               put(Integer'Image(months(i)(4, j)));
+            end if;
+         end loop;
+         put("  ");
+      end loop;
+
+      put_Line("");
+
+      for i in startMonth..endMonth loop
+         for j in 0..6 loop
+            if months(i)(5, j) < 10 and months(i)(5, j) > 0 then
+               put(" ");
+               put(Integer'Image(months(i)(5, j)));
+            elsif months(i)(5, j) = 0 then
+               put("   ");
+            else
+               put(Integer'Image(months(i)(5, j)));
+            end if;
+         end loop;
+         put("  ");
+      end loop;
+
+      put_Line("");
+   end printRowMonth;
+
+
+
    
 begin
    -- Test readCalInfo
    readCalInfo(year, firstDay, lang);
-   put_Line("Year: " & Integer'Image(year) & ", FirstDay: " & firstDay & ", Lang: " & lang);
+   put_Line("Year: " & Integer'Image(year) & ", FirstDay: " & Integer'Image(firstDay) & ", Lang: " & lang);
    response := leapYear(year);
    put_Line("Leap Year? : " & Boolean'Image(response));
    daysInMonth := numDaysInMonth(1, year);
@@ -115,4 +254,12 @@ begin
    put_line("Days in August: " & Integer'Image(daysInMonth));
    daysInMonth := numDaysInMonth(11, year);
    put_line("Days in December: " & Integer'Image(daysInMonth));
+   buildMonths(year, firstDay);
+   printRowMonth(months, 0, 2);
+   put_Line("");
+   printRowMonth(months, 3, 5);
+   put_Line("");
+   printRowMonth(months, 6, 8);
+   put_Line("");
+   printRowMonth(months, 9, 11);
 end cal;
