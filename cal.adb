@@ -8,8 +8,6 @@ procedure cal is
    year: Integer;
    firstDay: Integer;
    lang: String(1..7);
-   response: Boolean;
-   daysInMonth: Integer;
 
    type DaysArray is array(0..6) of String(1..10); -- Adjusted length to accommodate longest day name
    days: constant DaysArray := (
@@ -21,6 +19,23 @@ procedure cal is
       5 => "Friday    ",   -- Adjusted to 10 characters
       6 => "Saturday  "   -- Adjusted to 10 characters
    );
+
+   type MonthsArray is array(0..11) of String(1..24); -- Adjusted length to accommodate longest month name
+   monthNames: constant MonthsArray := (
+      0  => "      January           ",   -- Adjusted to 24 characters
+      1  => "      February          ",   -- Adjusted to 24 characters
+      2  => "       March            ",   -- Adjusted to 24 characters
+      3  => "       April            ",   -- Adjusted to 24 characters
+      4  => "        May             ",   -- Adjusted to 24 characters
+      5  => "       June             ",   -- Adjusted to 24 characters
+      6  => "       July             ",   -- Adjusted to 24 characters
+      7  => "      August            ",   -- Adjusted to 24 characters
+      8  => "     September          ",   -- Adjusted to 24 characters
+      9 =>  "      October           ",   -- Adjusted to 24 characters
+      10 => "     November           ",   -- Adjusted to 24 characters
+      11 => "     December           "    -- Adjusted to 24 characters
+   );
+
 
    --2D arrays representing the months
    type Matrix is array (Integer range 0..5, Integer range 0..6) of Integer;
@@ -137,6 +152,18 @@ procedure cal is
       end loop; 
    end buildMonths;
 
+   procedure printRowHeading(startMonth: in Integer; endMonth: in Integer) is
+      daysHeading: String := "Su Mo Tu We Th Fr Sa    ";
+   begin
+      for i in startMonth..endMonth loop
+         put(monthNames(i));
+      end loop;
+      put_Line("");
+      for i in startMonth..endMonth loop
+         put(daysHeading);
+      end loop;
+   end printRowHeading;
+
    procedure printRowMonth(months: ArrayOfMatrices; startMonth: in Integer; endMonth: in Integer) is
    begin
       -- Loop through all the months
@@ -237,29 +264,29 @@ procedure cal is
       put_Line("");
    end printRowMonth;
 
-
+   procedure buildCalendar(year: in Integer; firstDay: in Integer; months: ArrayOfMatrices) is
+   begin
+      buildMonths(year, firstDay);
+      printRowHeading(0, 2);
+      put_Line("");
+      printRowMonth(months, 0, 2);
+      put_Line("");
+      printRowHeading(3, 5);
+      put_Line("");
+      printRowMonth(months, 3, 5);
+      put_Line("");
+      printRowHeading(6, 8);
+      put_Line("");
+      printRowMonth(months, 6, 8);
+      put_Line("");
+      printRowHeading(9, 11);
+      put_Line("");
+      printRowMonth(months, 9, 11);
+   end buildCalendar;
 
    
 begin
    -- Test readCalInfo
    readCalInfo(year, firstDay, lang);
-   put_Line("Year: " & Integer'Image(year) & ", FirstDay: " & Integer'Image(firstDay) & ", Lang: " & lang);
-   response := leapYear(year);
-   put_Line("Leap Year? : " & Boolean'Image(response));
-   daysInMonth := numDaysInMonth(1, year);
-   put_line("Days in February: " & Integer'Image(daysInMonth));
-   daysInMonth := numDaysInMonth(6, year);
-   put_line("Days in July: " & Integer'Image(daysInMonth));
-   daysInMonth := numDaysInMonth(7, year);
-   put_line("Days in August: " & Integer'Image(daysInMonth));
-   daysInMonth := numDaysInMonth(11, year);
-   put_line("Days in December: " & Integer'Image(daysInMonth));
-   buildMonths(year, firstDay);
-   printRowMonth(months, 0, 2);
-   put_Line("");
-   printRowMonth(months, 3, 5);
-   put_Line("");
-   printRowMonth(months, 6, 8);
-   put_Line("");
-   printRowMonth(months, 9, 11);
+   buildCalendar(year, firstDay, months);
 end cal;
