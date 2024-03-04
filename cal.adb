@@ -2,6 +2,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
 with Ada.Float_Text_IO; use Ada.Float_Text_IO;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Ada.Exceptions; use Ada.Exceptions;
 
 procedure cal is
 
@@ -35,6 +36,10 @@ procedure cal is
       10 => "     November           ",   -- Adjusted to 24 characters
       11 => "     December           "    -- Adjusted to 24 characters
    );
+
+   
+   type Digit_Array is array (1..9, 1..6) of Character;
+   type Banner_Digits is array (0 .. 9) of Digit_Array;
 
 
    --2D arrays representing the months
@@ -284,9 +289,74 @@ procedure cal is
       printRowMonth(months, 9, 11);
    end buildCalendar;
 
+   procedure Read_Digits(year: in Integer) is
+      type Digit_Grid is array (1 .. 10, 1 .. 10) of Character;
+      type Digits_Array is array (0 .. 9) of Digit_Grid;
+      Ban_Digits : Digits_Array;
+
+      File : File_Type;
+      Line : String(1 .. 10);
+      Last : String(1..10);
+   begin
+      -- Attempt to open the file
+      begin
+         Open(File, In_File, "./updated_digits.txt");
+      exception
+         when E : others =>
+            Put_Line("Failed to open file: " & Exception_Message(E));
+            return;
+      end;
+
+      -- Read the file content into the Digits array
+      begin
+         for Digit in Digits_Array'Range loop
+            for Row in Digit_Grid'Range loop
+               -- Read each line corresponding to the current digit
+               Get_Line(File, Line, Last);
+               -- Store each character in the 2D array repeatedly for 10 times in each row
+               for Col in Digit_Grid'Range loop
+                  for Repeat_Index in 1 .. 10 loop
+                     Ban_Digits(Digit)(Row, (Col - 1) * 10 + Repeat_Index) := Line(Col);
+                  end loop;
+               end loop;
+            end loop;
+            -- Skip the empty line between digits in the file
+            if not End_Of_File(File) then
+               Skip_Line(File);
+            end if;
+         end loop;
+      exception
+         when E : others =>
+            Put_Line("An error occurred while reading the file: " & Exception_Message(E));
+            Close(File);
+            return;
+      end;
+
+      -- Close the file
+      Close(File);
+
+      -- Print out the digits
+      for i in Digits_Array'Range loop
+         for j in Digit_Grid'Range loop
+            for k in Digit_Grid'Range loop
+               Put(Ban_Digits(i)(j, k));
+            end loop;
+            New_Line; -- Print a newline after each row
+         end loop;
+         New_Line; -- Print a newline after each digit
+      end loop;
+
+   exception
+      when E : others =>
+         Put_Line("An error occurred: " & Exception_Message(E));
+   end Read_Digits;
+
+
+
    
 begin
    -- Test readCalInfo
    readCalInfo(year, firstDay, lang);
    buildCalendar(year, firstDay, months);
+   Read_Digits(year);
 end cal;
