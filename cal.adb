@@ -32,7 +32,7 @@ procedure cal is
       6  => "       July             ",   -- Adjusted to 24 characters
       7  => "      August            ",   -- Adjusted to 24 characters
       8  => "     September          ",   -- Adjusted to 24 characters
-      9 =>  "      October           ",   -- Adjusted to 24 characters
+      9  => "      October           ",   -- Adjusted to 24 characters
       10 => "     November           ",   -- Adjusted to 24 characters
       11 => "     December           "    -- Adjusted to 24 characters
    );
@@ -47,12 +47,13 @@ procedure cal is
    type ArrayOfMatrices is array (0..11) of Matrix;
    months : ArrayOfMatrices;
 
+   -- Check if the inputted year is valid
    function isYearValid(year: Integer) return Boolean is
    begin
-      -- Check if the inputted year is valid
       return year >= 1582;
    end isYearValid;
 
+   -- Read calendar information from the user
    procedure readCalInfo(
       year     : out Integer;
       firstDay : out Integer;
@@ -62,20 +63,29 @@ procedure cal is
       calcYear : Integer;
       dayForFirstIndex: Integer;
       validInputYear: Boolean := False;
+
+      -- Custom exception for invalid input
+      Invalid_Input : exception;
    begin
       while not validInputYear loop
          put_Line("Enter a year greater than 1582 (inclusive):");
-         get(inputYear);
-         put_line("");
-         
-         validInputYear := isYearValid(inputYear);
-
-         if not validInputYear then
-            put_Line("Please ensure that your entered year is a valid integer and greater than 1582 (inclusive).");
+         begin
+            get(inputYear);
             put_line("");
-         else
-            put_Line(trim(Integer'Image(inputYear), side => ada.strings.Left) & " is a valid year!");
-         end if;
+            
+            validInputYear := isYearValid(inputYear);
+
+            if not validInputYear then
+               raise Invalid_Input;
+            else
+               put_Line(trim(Integer'Image(inputYear), side => ada.strings.Left) & " is a valid year!");
+            end if;
+         exception
+            when Invalid_Input =>
+               put_Line("Please ensure that your entered year is a valid integer and greater than 1582 (inclusive).");
+               put_line("");
+         end;
+
       end loop;
 
       -- Calculate the day that will be the first of the month
@@ -85,12 +95,18 @@ procedure cal is
       
       year := inputYear;  -- Assigning the valid year with :=
       lang := "English";  -- Placeholder value with :=
+   exception
+      when others =>
+         put_Line("error printing out the requested year!");
+         null;
    end readCalInfo;
 
+
+   -- Determine if a given year is a leap year
    function leapYear(year: Integer) return Boolean is
    begin
-      --divisible by 4 for non-century = leap year
-      --divisible by 400 for century = leap year
+      -- Divisible by 4 for non-century = leap year
+      -- Divisible by 400 for century = leap year
 
       if year mod 4 = 0 then
          return True;
@@ -101,6 +117,7 @@ procedure cal is
       return False;
    end leapYear;
 
+   -- Get the number of days in a month for a given year
    function numDaysInMonth(month: Integer; year: Integer) return Integer is
       leapYearResponse: Boolean;
    begin
@@ -125,15 +142,16 @@ procedure cal is
       end case;
    end numDaysInMonth;
 
+   -- Build the matrix representation of the months
    procedure buildMonths(year: in Integer; firstDay: in Integer) is
       monthFirstDay: Integer;
       dayNum: Integer := 1;
    begin
 
-      --decreasae by one in order to set it up for loop
+      -- Decrease by one in order to set it up for loop
       monthFirstDay := firstDay;
 
-      --loop through all the months
+      -- Loop through all the months
       for i in months'Range loop
 
          for Row in months(i)'Range(1) loop
@@ -157,8 +175,9 @@ procedure cal is
       end loop; 
    end buildMonths;
 
+   -- Print the row heading of the calendar
    procedure printRowHeading(startMonth: in Integer; endMonth: in Integer) is
-      daysHeading: String := "Su Mo Tu We Th Fr Sa    ";
+      daysHeading: String := " Su Mo Tu We Th Fr Sa  ";
    begin
       for i in startMonth..endMonth loop
          put(monthNames(i));
@@ -169,6 +188,7 @@ procedure cal is
       end loop;
    end printRowHeading;
 
+   -- Print the rows of each month
    procedure printRowMonth(months: ArrayOfMatrices; startMonth: in Integer; endMonth: in Integer) is
    begin
       -- Loop through all the months
@@ -188,6 +208,7 @@ procedure cal is
 
       put_Line("");
 
+      -- Printing the rows of each month
       for i in startMonth..endMonth loop
          for j in 0..6 loop
             if months(i)(1, j) < 10  and months(i)(1, j) > 0 then
@@ -269,8 +290,56 @@ procedure cal is
       put_Line("");
    end printRowMonth;
 
+   -- Load font data for printing numbers
    procedure buildCalendar(year: in Integer; firstDay: in Integer; months: ArrayOfMatrices) is
+      type SingleNumber is array(0..9) of String(1..7);
+      type FontArray is array(0..9) of SingleNumber;
+
+      -- Load font data from file
+      procedure loadFont(theArray: in out FontArray) is
+         infp: file_type;
+         numCounter: integer;
+         lineNum: integer;
+      begin
+         numCounter := 0;
+         lineNum := 0;
+         open(infp, in_file, "numberFont.dat");
+         loop
+            exit when end_of_file(infp);
+            get(infp, theArray(numCounter)(lineNum));
+            lineNum := lineNum + 1;
+            if (lineNum = 10) then
+                  numCounter := numCounter + 1;
+                  lineNum := 0;
+            end if;
+         end loop;
+         close(infp);
+      end loadFont;
+
+      fontData: FontArray;
+
+      digitOne, digitTwo, digitThree, digitFour: Integer;
+
    begin
+
+      loadFont(fontData);
+
+      digitOne := year / 1000;
+      digitTwo := (year mod 1000) / 100;
+      digitThree := (year mod 100) / 10;
+      digitFour := year mod 10;
+
+      -- Print out a number (for example, number 2)
+      -- This will print the number represented by the font in the console
+      for i in 0..9 loop
+         put("                ");
+         put(fontData(digitOne)(i) & "  "); put(fontData(digitTwo)(i) & "  "); put(fontData(digitThree)(i) & "  "); put(fontData(digitFour)(i));
+         put("                ");
+         put_line(""); -- Print newline after each row of the number
+      end loop;
+
+      put_Line("");
+
       buildMonths(year, firstDay);
       printRowHeading(0, 2);
       put_Line("");
@@ -287,76 +356,14 @@ procedure cal is
       printRowHeading(9, 11);
       put_Line("");
       printRowMonth(months, 9, 11);
+
    end buildCalendar;
-
-   procedure Read_Digits(year: in Integer) is
-      type Digit_Grid is array (1 .. 10, 1 .. 10) of Character;
-      type Digits_Array is array (0 .. 9) of Digit_Grid;
-      Ban_Digits : Digits_Array;
-
-      File : File_Type;
-      Line : String(1 .. 10);
-      Last : String(1..10);
-   begin
-      -- Attempt to open the file
-      begin
-         Open(File, In_File, "./updated_digits.txt");
-      exception
-         when E : others =>
-            Put_Line("Failed to open file: " & Exception_Message(E));
-            return;
-      end;
-
-      -- Read the file content into the Digits array
-      begin
-         for Digit in Digits_Array'Range loop
-            for Row in Digit_Grid'Range loop
-               -- Read each line corresponding to the current digit
-               Get_Line(File, Line, Last);
-               -- Store each character in the 2D array repeatedly for 10 times in each row
-               for Col in Digit_Grid'Range loop
-                  for Repeat_Index in 1 .. 10 loop
-                     Ban_Digits(Digit)(Row, (Col - 1) * 10 + Repeat_Index) := Line(Col);
-                  end loop;
-               end loop;
-            end loop;
-            -- Skip the empty line between digits in the file
-            if not End_Of_File(File) then
-               Skip_Line(File);
-            end if;
-         end loop;
-      exception
-         when E : others =>
-            Put_Line("An error occurred while reading the file: " & Exception_Message(E));
-            Close(File);
-            return;
-      end;
-
-      -- Close the file
-      Close(File);
-
-      -- Print out the digits
-      for i in Digits_Array'Range loop
-         for j in Digit_Grid'Range loop
-            for k in Digit_Grid'Range loop
-               Put(Ban_Digits(i)(j, k));
-            end loop;
-            New_Line; -- Print a newline after each row
-         end loop;
-         New_Line; -- Print a newline after each digit
-      end loop;
-
-   exception
-      when E : others =>
-         Put_Line("An error occurred: " & Exception_Message(E));
-   end Read_Digits;
-
-
 
    
 begin
    -- Test readCalInfo
    readCalInfo(year, firstDay, lang);
+   put_Line("");
    buildCalendar(year, firstDay, months);
-   Read_Digits(year);
+   put_Line("");
 end cal;
